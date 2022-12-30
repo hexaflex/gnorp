@@ -2,6 +2,7 @@ const std = @import("std");
 const glfw = @import("glfw");
 const gpu = @import("gpu");
 const gnorp = @import("main.zig");
+const math = gnorp.math;
 
 test {
     std.testing.refAllDecls(@This());
@@ -148,9 +149,9 @@ pub fn beginFrame() !void {
         framebuffer_size = size;
         const fw = @intToFloat(f32, size.width);
         const fh = @intToFloat(f32, size.height);
-        const mat = gnorp.math.orthographicOffCenterLh(0, fw, 0, fh, 0, 1);
+        const mat = math.orthographicOffCenterLh(0, fw, 0, fh, 0, 1);
         shared_uniforms.set(&.{
-            .mat_projection = gnorp.math.transpose(mat),
+            .mat_projection = math.transpose(mat),
         });
     }
 

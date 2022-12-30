@@ -1,13 +1,20 @@
 const std = @import("std");
-
-pub usingnamespace @import("zmath");
+pub const zmath = @import("zmath");
 
 test {
     std.testing.refAllDecls(@This());
     std.testing.refAllDecls(Transform);
 }
 
-const Self = @This();
+pub const Mat = zmath.Mat;
+pub const Vec = zmath.Vec;
+pub const orthographicOffCenterLh = zmath.orthographicOffCenterLh;
+pub const transpose = zmath.transpose;
+pub const identity = zmath.identity;
+pub const translation = zmath.translation;
+pub const scaling = zmath.scaling;
+pub const rotationZ = zmath.rotationZ;
+pub const mul = zmath.mul;
 
 /// Transform describes transformation data for a 2D object.
 pub const Transform = struct {
@@ -15,7 +22,7 @@ pub const Transform = struct {
     scale: [2]f32,
     angle: f32, // angle in radians.
 
-    model: Self.Mat,
+    model: Mat,
     dirty: bool,
 
     pub fn init() @This() {
@@ -23,7 +30,7 @@ pub const Transform = struct {
             .position = .{ 0, 0 },
             .scale = .{ 1, 1 },
             .angle = 0,
-            .model = Self.identity(),
+            .model = identity(),
             .dirty = true,
         };
     }
@@ -62,22 +69,22 @@ pub const Transform = struct {
     }
 
     /// getModel returns the precomputed model matrix.
-    pub inline fn getModel(self: *@This()) Self.Mat {
+    pub inline fn getModel(self: *@This()) Mat {
         _ = self.getModelIfUpdated();
         return self.model;
     }
 
     /// getModelIfUpdated returns the up-to-date model matrix, or null if
     /// nothing has changed since the last call.
-    pub fn getModelIfUpdated(self: *@This()) ?Self.Mat {
+    pub fn getModelIfUpdated(self: *@This()) ?zmath.Mat {
         if (!self.dirty) return null;
         self.dirty = false;
 
-        const m_translate = Self.translation(self.position[0] + 0.375, self.position[1] + 0.375, 0);
-        const m_scale = Self.scaling(self.scale[0], self.scale[1], 0);
-        const m_rotate = Self.rotationZ(self.angle);
+        const m_translate = zmath.translation(self.position[0] + 0.375, self.position[1] + 0.375, 0);
+        const m_scale = zmath.scaling(self.scale[0], self.scale[1], 0);
+        const m_rotate = zmath.rotationZ(self.angle);
 
-        self.model = Self.mul(Self.mul(m_scale, m_rotate), m_translate);
+        self.model = zmath.mul(zmath.mul(m_scale, m_rotate), m_translate);
         return self.model;
     }
 };

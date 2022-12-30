@@ -17,12 +17,6 @@ pub fn build(b: *Builder) !void {
     obj.install();
     try link(b, obj);
 
-    const install_content_step = b.addInstallDirectory(.{
-        .source_dir = this_dir ++ "/src/assets/copy",
-        .install_dir = .{ .custom = "" },
-        .install_subdir = "bin/assets",
-    });
-
     const exe_options = b.addOptions();
     exe_options.addOption([]const u8, "build_prefix", if (build_mode == .Debug) (this_dir ++ "/src/") else "");
     exe_options.addOption([]const u8, "content_dir", this_dir ++ "/zig-out/bin/assets");
@@ -32,7 +26,6 @@ pub fn build(b: *Builder) !void {
     const tests = b.addTest(this_dir ++ "/src/main.zig");
     tests.setBuildMode(build_mode);
     tests.setTarget(target);
-    tests.step.dependOn(&install_content_step.step);
     tests.addOptions("build_options", exe_options);
     try link(b, tests);
 
@@ -41,15 +34,13 @@ pub fn build(b: *Builder) !void {
 }
 
 pub fn link(b: *std.build.Builder, obj: *std.build.LibExeObjStep) !void {
-    const gpu_dawn = GpuDawnSdk(.{
-        .glfw = glfw,
-        .glfw_include_dir = this_dir ++ "/libs/mach-glfw/upstream/glfw/include",
-        .system_sdk = system_sdk,
-    });
-
     const gpu = GpuSdk(.{
         .glfw = glfw,
-        .gpu_dawn = gpu_dawn,
+        .gpu_dawn = GpuDawnSdk(.{
+            .glfw = glfw,
+            .glfw_include_dir = this_dir ++ "/libs/mach-glfw/upstream/glfw/include",
+            .system_sdk = system_sdk,
+        }),
     });
 
     try glfw.link(b, obj, .{});

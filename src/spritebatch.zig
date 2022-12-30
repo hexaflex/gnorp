@@ -1,6 +1,7 @@
 const std = @import("std");
 const gpu = @import("gpu");
 const gnorp = @import("main.zig");
+const math = gnorp.math;
 const graphics = gnorp.graphics;
 const animation = gnorp.animation.sprites;
 
@@ -12,25 +13,25 @@ const indices = [_]u16{ 0, 1, 2, 2, 1, 3 };
 
 /// CPUSprite represents sprite metadata outside the GPU.
 const CPUSprite = struct {
-    transform: gnorp.math.Transform,
+    transform: math.Transform,
     animation: animation.State,
 };
 
 /// GPUSprite defines data for a single sprite on the GPU.
 const GPUSprite = extern struct {
-    mat_model: gnorp.math.Mat,
+    mat_model: math.Mat,
     uv: [8]f32,
     color: [4]f32,
 };
 
 const RenderUniforms = extern struct {
-    mat_model: gnorp.math.Mat,
-    color: gnorp.math.F32x4,
+    mat_model: math.Mat,
+    color: [4]f32,
 };
 
 const RenderUniformBuffer = graphics.UniformBuffer(RenderUniforms);
 
-transform: gnorp.math.Transform = gnorp.math.Transform.init(),
+transform: math.Transform = math.Transform.init(),
 blend_state: gpu.BlendState = .{},
 pipeline: ?*gpu.RenderPipeline = null,
 bind_group: ?*gpu.BindGroup = null,

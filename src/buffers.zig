@@ -2,6 +2,7 @@ const std = @import("std");
 const gpu = @import("gpu");
 const gnorp = @import("main.zig");
 const graphics = gnorp.graphics;
+const math = gnorp.math;
 
 test {
     std.testing.refAllDecls(@This());
@@ -293,8 +294,8 @@ const supported_types = [_]type{
     [16]f32,
     [16]f64,
 
-    gnorp.math.Mat,
-    gnorp.math.Vec,
+    math.Mat,
+    math.Vec,
 };
 
 /// isSupportedType returns true if T is a supported type.
