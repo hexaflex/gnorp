@@ -46,6 +46,7 @@ pub fn link(b: *std.build.Builder, obj: *std.build.LibExeObjStep) !void {
     try glfw.link(b, obj, .{});
     try gpu.link(b, obj, .{});
 
+    obj.addPackage(pkg);
     for (pkg.dependencies.?) |p|
         obj.addPackage(p);
 }
