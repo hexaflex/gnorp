@@ -7,3 +7,6 @@
 [submodule "libs/mach-glfw"]
 	path = libs/mach-glfw
 	url = https://github.com/hexops/mach-glfw
+[submodule "libs/zigimg"]
+	path = libs/zigimg
+	url = https://github.com/zigimg/zigimg
