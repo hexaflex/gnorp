@@ -68,7 +68,7 @@ pub const pkg = blk: {
         .source = .{ .path = this_dir ++ "/src/main.zig" },
         .dependencies = &.{ gpu.pkg, glfw.pkg, zmath.pkg, .{
             .name = "zigimg",
-            .source = .{ .path = this_dir ++ "/libs/zigimg/zigimg.zig" },
+            .source = .{ .path = this_dir ++ "/libs/zimg/zigimg.zig" },
         } },
     };
 };
