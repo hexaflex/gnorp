@@ -11,7 +11,7 @@ pub fn build(b: *Builder) !void {
     const build_mode = b.standardReleaseOptions();
     const target = b.standardTargetOptions(.{});
 
-    const obj = b.addExecutable("gnorp", this_dir ++ "/src/main.zig");
+    const obj = b.addStaticLibrary("gnorp", this_dir ++ "/src/main.zig");
     obj.setBuildMode(build_mode);
     obj.setTarget(target);
     obj.install();
