@@ -122,7 +122,7 @@ pub inline fn setClearColor(color: gpu.Color) void {
 }
 
 /// getColorAttachment returns a renderpass color attachment with the current
-/// backbuffer and clear color. As well as then given LoadOp.
+/// backbuffer and clear color. As well as the given LoadOp.
 pub fn getColorAttachment(load_op: gpu.LoadOp) gpu.RenderPassColorAttachment {
     return .{
         .view = back_buffer_view.?,
