@@ -37,6 +37,7 @@ pub const UniformBuffer = @import("buffers.zig").Uniform;
 // NOTE: This struct should be kept in sync with shared_uniforms.wgsl
 const SharedUniforms = extern struct {
     mat_projection: gnorp.math.Mat,
+    mat_view: gnorp.math.Mat,
 };
 
 /// SharedUniformBuffer represents the uniform buffer object
@@ -57,6 +58,9 @@ var swap_chain: ?*gpu.SwapChain = null;
 var back_buffer_view: ?*gpu.TextureView = null;
 var shared_uniforms: *SharedUniformBuffer = undefined;
 var clear_color: gpu.Color = .{ .r = 0, .g = 0, .b = 0, .a = 0 };
+var mat_projection: math.Mat = math.identity();
+var mat_view: math.Mat = math.identity();
+var uniforms_dirty: bool = true;
 
 pub fn init() !void {
     if (!@import("builtin").is_test)
@@ -136,6 +140,16 @@ pub inline fn getFramebufferSize() ![2]f32 {
     };
 }
 
+pub inline fn setProjectionMatrix(mat: math.Mat) void {
+    mat_projection = mat;
+    uniforms_dirty = true;
+}
+
+pub inline fn setViewMatrix(mat: math.Mat) void {
+    mat_view = mat;
+    uniforms_dirty = true;
+}
+
 /// beginFrame selects the target backbuffer and ensures the swapchain is valid.
 /// This should be called every frame before drawing of other components begins.
 /// Drawing should conclude with a call to endFrame().
@@ -143,15 +157,20 @@ pub inline fn getFramebufferSize() ![2]f32 {
 /// This function is used by the library internally and should not be called
 /// directly by the host application.
 pub fn beginFrame() !void {
-    // Update uniforms if the framebuffer has been resized.
-    const size = try window.getSize();
-    if (size.width != framebuffer_size.width or size.height != framebuffer_size.height) {
-        framebuffer_size = size;
-        const fw = @intToFloat(f32, size.width);
-        const fh = @intToFloat(f32, size.height);
-        const mat = math.orthographicOffCenterLh(0, fw, 0, fh, 0, 1);
+    // Reconfigures the swap chain with the new framebuffer width/height,
+    // otherwise e.g. the Vulkan device would be lost after a resize.
+    const size = try window.getFramebufferSize();
+    if (size.width != target_desc.width or size.height != target_desc.height) {
+        gnorp.log.debug(null, "window resized to: {} x {}", .{ size.width, size.height });
+        target_desc.width = size.width;
+        target_desc.height = size.height;
+    }
+
+    if (uniforms_dirty) {
+        uniforms_dirty = false;
         shared_uniforms.set(&.{
-            .mat_projection = math.transpose(mat),
+            .mat_projection = mat_projection,
+            .mat_view = mat_view,
         });
     }
 
@@ -334,16 +353,6 @@ fn initWindow() !void {
         .opengl, .opengles => try glfw.makeContextCurrent(window),
         else => {},
     }
-
-    // Reconfigure the swap chain with the new framebuffer width/height,
-    // otherwise e.g. the Vulkan device would be lost after a resize.
-    window.setFramebufferSizeCallback((struct {
-        fn callback(_: glfw.Window, width: u32, height: u32) void {
-            gnorp.log.debug(null, "window resized to: {} x {}", .{ width, height });
-            target_desc.width = width;
-            target_desc.height = height;
-        }
-    }).callback);
 }
 
 fn detectBackendType() !gpu.BackendType {
