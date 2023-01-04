@@ -8,6 +8,7 @@ test {
 
 pub const Mat = zmath.Mat;
 pub const Vec = zmath.Vec;
+pub const perspectiveFovLh = zmath.perspectiveFovLh;
 pub const orthographicOffCenterLh = zmath.orthographicOffCenterLh;
 pub const transpose = zmath.transpose;
 pub const identity = zmath.identity;
