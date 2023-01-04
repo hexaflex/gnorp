@@ -141,11 +141,13 @@ pub inline fn getFramebufferSize() ![2]f32 {
     };
 }
 
+/// setProjectionMatrix sets the projection matrix provided by the shared uniform block.
 pub inline fn setProjectionMatrix(mat: zmath.Mat) void {
     mat_projection = mat;
     uniforms_dirty = true;
 }
 
+/// setViewMatrix sets the view matrix provided by the shared uniform block.
 pub inline fn setViewMatrix(mat: zmath.Mat) void {
     mat_view = mat;
     uniforms_dirty = true;
@@ -170,7 +172,7 @@ pub fn beginFrame() !void {
     if (uniforms_dirty) {
         uniforms_dirty = false;
         shared_uniforms.set(&.{
-            .mat_projection = mat_projection,
+            .mat_projection = zmath.transpose(mat_projection),
             .mat_view = mat_view,
         });
     }
