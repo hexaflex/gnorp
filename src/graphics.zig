@@ -172,7 +172,7 @@ pub fn beginFrame() !void {
     if (uniforms_dirty) {
         uniforms_dirty = false;
         shared_uniforms.set(&.{
-            .mat_projection = zmath.transpose(mat_projection),
+            .mat_projection = mat_projection,
             .mat_view = mat_view,
         });
     }
