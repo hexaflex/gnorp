@@ -1,9 +1,11 @@
 const std = @import("std");
 const glfw = @import("glfw");
 const gpu = @import("gpu");
+const zmath = @import("zmath");
 const gnorp = @import("main.zig");
 const graphics = gnorp.graphics;
 const animation = gnorp.animation;
+const math = gnorp.math;
 
 test {
     std.testing.refAllDecls(@This());
@@ -11,7 +13,7 @@ test {
 
 // Keep this struct in sync with LocalUniforms in tilemap.wgsl
 const RenderUniforms = extern struct {
-    mat_model: gnorp.math.Mat,
+    mat_model: zmath.Mat,
     color: [4]f32,
     grid_width: u32,
     tile_width: u32,

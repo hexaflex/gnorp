@@ -1,5 +1,6 @@
 const std = @import("std");
 const gpu = @import("gpu");
+const zmath = @import("zmath");
 const gnorp = @import("main.zig");
 const math = gnorp.math;
 const graphics = gnorp.graphics;
@@ -19,13 +20,13 @@ const CPUSprite = struct {
 
 /// GPUSprite defines data for a single sprite on the GPU.
 const GPUSprite = extern struct {
-    mat_model: math.Mat,
+    mat_model: zmath.Mat,
     uv: [8]f32,
     color: [4]f32,
 };
 
 const RenderUniforms = extern struct {
-    mat_model: math.Mat,
+    mat_model: zmath.Mat,
     color: [4]f32,
 };
 
@@ -194,7 +195,7 @@ pub fn addSprite(self: *@This()) !usize {
 
     const fs = self.spritesheet.animations.frame_size;
     var sprite = CPUSprite{
-        .transform = gnorp.math.Transform.init(),
+        .transform = math.Transform.init(),
         .animation = .{},
     };
     sprite.transform.setScale(.{
@@ -205,7 +206,7 @@ pub fn addSprite(self: *@This()) !usize {
 
     self.cpu_sprites[self.sprites_index] = sprite;
     self.gpu_sprites[self.sprites_index] = GPUSprite{
-        .mat_model = gnorp.math.identity(),
+        .mat_model = zmath.identity(),
         .uv = .{ 0, 0, 1, 0, 0, 1, 1, 1 },
         .color = .{ 1, 1, 1, 1 },
     };

@@ -1,21 +1,10 @@
 const std = @import("std");
-pub const zmath = @import("zmath");
+const zmath = @import("zmath");
 
 test {
     std.testing.refAllDecls(@This());
     std.testing.refAllDecls(Transform);
 }
-
-pub const Mat = zmath.Mat;
-pub const Vec = zmath.Vec;
-pub const perspectiveFovLh = zmath.perspectiveFovLh;
-pub const orthographicOffCenterLh = zmath.orthographicOffCenterLh;
-pub const transpose = zmath.transpose;
-pub const identity = zmath.identity;
-pub const translation = zmath.translation;
-pub const scaling = zmath.scaling;
-pub const rotationZ = zmath.rotationZ;
-pub const mul = zmath.mul;
 
 /// Transform describes transformation data for a 2D object.
 pub const Transform = struct {
@@ -23,7 +12,7 @@ pub const Transform = struct {
     scale: [2]f32,
     angle: f32, // angle in radians.
 
-    model: Mat,
+    model: zmath.Mat,
     dirty: bool,
 
     pub fn init() @This() {
@@ -31,7 +20,7 @@ pub const Transform = struct {
             .position = .{ 0, 0 },
             .scale = .{ 1, 1 },
             .angle = 0,
-            .model = identity(),
+            .model = zmath.identity(),
             .dirty = true,
         };
     }
@@ -70,7 +59,7 @@ pub const Transform = struct {
     }
 
     /// getModel returns the precomputed model matrix.
-    pub inline fn getModel(self: *@This()) Mat {
+    pub inline fn getModel(self: *@This()) zmath.Mat {
         _ = self.getModelIfUpdated();
         return self.model;
     }

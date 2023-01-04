@@ -1,5 +1,6 @@
 const std = @import("std");
 const gpu = @import("gpu");
+const zmath = @import("zmath");
 const gnorp = @import("main.zig");
 const graphics = gnorp.graphics;
 const animation = gnorp.animation.sprites;
@@ -10,7 +11,7 @@ test {
 }
 
 const RenderUniforms = extern struct {
-    mat_model: math.Mat,
+    mat_model: zmath.Mat,
     color: [4]f32,
 };
 

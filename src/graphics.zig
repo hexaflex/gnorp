@@ -1,6 +1,7 @@
 const std = @import("std");
 const glfw = @import("glfw");
 const gpu = @import("gpu");
+const zmath = @import("zmath");
 const gnorp = @import("main.zig");
 const math = gnorp.math;
 
@@ -36,8 +37,8 @@ pub const UniformBuffer = @import("buffers.zig").Uniform;
 
 // NOTE: This struct should be kept in sync with shared_uniforms.wgsl
 const SharedUniforms = extern struct {
-    mat_projection: gnorp.math.Mat,
-    mat_view: gnorp.math.Mat,
+    mat_projection: zmath.Mat,
+    mat_view: zmath.Mat,
 };
 
 /// SharedUniformBuffer represents the uniform buffer object
@@ -58,8 +59,8 @@ var swap_chain: ?*gpu.SwapChain = null;
 var back_buffer_view: ?*gpu.TextureView = null;
 var shared_uniforms: *SharedUniformBuffer = undefined;
 var clear_color: gpu.Color = .{ .r = 0, .g = 0, .b = 0, .a = 0 };
-var mat_projection: math.Mat = math.identity();
-var mat_view: math.Mat = math.identity();
+var mat_projection: zmath.Mat = zmath.identity();
+var mat_view: zmath.Mat = zmath.identity();
 var uniforms_dirty: bool = true;
 
 pub fn init() !void {
@@ -140,12 +141,12 @@ pub inline fn getFramebufferSize() ![2]f32 {
     };
 }
 
-pub inline fn setProjectionMatrix(mat: math.Mat) void {
+pub inline fn setProjectionMatrix(mat: zmath.Mat) void {
     mat_projection = mat;
     uniforms_dirty = true;
 }
 
-pub inline fn setViewMatrix(mat: math.Mat) void {
+pub inline fn setViewMatrix(mat: zmath.Mat) void {
     mat_view = mat;
     uniforms_dirty = true;
 }

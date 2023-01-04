@@ -14,7 +14,7 @@ pub const input = @import("input.zig");
 /// timer provides timer helpers.
 pub const timer = @import("timer.zig");
 
-/// math exposes zmath and adds some additional helpers.
+/// math adds some mathy helpers ontop of zmath.
 pub const math = @import("math.zig");
 
 /// animation provides helper functions and types for various forms of animation.

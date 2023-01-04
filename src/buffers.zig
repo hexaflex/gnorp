@@ -1,167 +1,13 @@
 const std = @import("std");
 const gpu = @import("gpu");
+const zmath = @import("zmath");
 const gnorp = @import("main.zig");
 const graphics = gnorp.graphics;
 const math = gnorp.math;
 
 test {
     std.testing.refAllDecls(@This());
-    std.testing.refAllDecls(Generic(f32));
     std.testing.refAllDecls(Uniform(extern struct { a: u16 }));
-}
-
-/// Generic creates a gpu Buffer with the given element type.
-/// This type takes care of dynamic resizing on the CPU and GPU where needed.
-pub fn Generic(comptime T: type) type {
-    return struct {
-        usage: gpu.Buffer.UsageFlags = undefined,
-        gpu_buffer: ?*gpu.Buffer = null,
-        data: std.ArrayList(T) = undefined,
-        old_size: usize = 0,
-        refcount: usize = 0,
-        dirty: bool = true,
-
-        pub fn init(usage: gpu.Buffer.UsageFlags) !*@This() {
-            var self = try gnorp.allocator.create(@This());
-            self.* = .{};
-            self.usage = usage;
-            self.data = std.ArrayList(T).init(gnorp.allocator);
-            return self.reference();
-        }
-
-        fn deinit(self: *@This()) void {
-            if (self.gpu_buffer) |gb|
-                gb.release();
-            self.data.deinit();
-            gnorp.allocator.destroy(self);
-        }
-
-        /// reference increments this object's reference counter and returns itself.
-        pub inline fn reference(self: *@This()) *@This() {
-            return gnorp.resources.reference(self);
-        }
-
-        /// release decrements the object's reference counter and calls deinit()
-        /// on it if it reaches zero. This is a no-op if the refcount is already zero.
-        pub inline fn release(self: *@This()) void {
-            gnorp.resources.release(self, deinit);
-        }
-
-        /// len returns the number of elements in the buffer.
-        pub inline fn len(self: *const @This()) usize {
-            return self.data.items.len;
-        }
-
-        /// bindVertex sets this buffer as the vertex buffer on the given slot for the specified
-        /// RenderPassEncoder.
-        pub inline fn bindVertex(self: *const @This(), pass: *gpu.RenderPassEncoder, slot: u32) void {
-            pass.setVertexBuffer(slot, self.gpu_buffer.?, 0, self.data.items.len * @sizeOf(T));
-        }
-
-        /// bindIndex sets this buffer as the index buffer for the specified RenderPassEncoder.
-        pub inline fn bindIndex(self: *const @This(), pass: *gpu.RenderPassEncoder) void {
-            switch (T) {
-                u16 => pass.setIndexBuffer(self.gpu_buffer.?, .uint16, 0, self.data.items.len * @sizeOf(T)),
-                u32 => pass.setIndexBuffer(self.gpu_buffer.?, .uint32, 0, self.data.items.len * @sizeOf(T)),
-                else => unreachable,
-            }
-        }
-
-        /// append appends the given value.
-        pub inline fn append(self: *@This(), value: T) !void {
-            try self.data.append(value);
-            self.dirty = true;
-        }
-
-        /// appendSlice appends the given value.
-        pub inline fn appendSlice(self: *@This(), values: []const T) !void {
-            try self.data.appendSlice(values);
-            self.dirty = true;
-        }
-
-        /// appendAssumeCapacity appends the given value.
-        pub inline fn appendAssumeCapacity(self: *@This(), value: T) void {
-            self.data.appendAssumeCapacity(value);
-            self.dirty = true;
-        }
-
-        /// appendSliceAssumeCapacity appends the given value.
-        pub inline fn appendSliceAssumeCapacity(self: *@This(), values: []const T) void {
-            self.data.appendSliceAssumeCapacity(values);
-            self.dirty = true;
-        }
-
-        /// resize adjusts the list's length to new_len.
-        /// Does not initialize added items if any.
-        pub inline fn resize(self: *@This(), new_len: usize) !void {
-            try self.data.resize(new_len);
-            self.dirty = true;
-        }
-
-        /// swapRemove removes the element at the specified index and returns it.
-        /// The empty slot is filled from the end of the list.
-        /// This operation is O(1).
-        pub inline fn swapRemove(self: *@This(), i: usize) T {
-            self.dirty = true;
-            return self.data.swapRemove(i);
-        }
-
-        /// orderedRemove removes the element at index `i`, shifts elements after index
-        /// `i` forward, and returns the removed element.
-        /// Asserts the array has at least one item.
-        /// Invalidates pointers to the end of the list.
-        pub inline fn orderedRemove(self: *@This(), i: usize) T {
-            self.dirty = true;
-            return self.data.orderedRemove(i);
-        }
-
-        /// removeRange removes a range of values starting at the given index.
-        pub fn removeRange(self: *@This(), index: usize, count: usize) void {
-            var i: usize = 0;
-            while (i < count) : (i += 1)
-                _ = self.data.orderedRemove(index + i);
-            self.dirty = true;
-        }
-
-        /// getBindGroupEntry returns a bindgroup entry for this buffer
-        /// and the given binding index.
-        pub inline fn getBindGroupEntry(self: *const @This(), binding: u32) gpu.BindGroup.Entry {
-            const size = @truncate(u32, self.data.items.len * @sizeOf(T));
-            return gpu.BindGroup.Entry.buffer(binding, self.gpu_buffer.?, 0, size);
-        }
-
-        /// sync ensures the GPU buffer is synchronized with the local data copy.
-        pub fn sync(self: *@This()) !void {
-            if (!self.dirty) return;
-
-            // Shrink the arraylist of needed.
-            if (self.data.items.len <= self.data.capacity / 2)
-                self.data.shrinkAndFree(self.data.capacity / 2);
-
-            const new_size = switch (self.data.capacity) {
-                0 => 0,
-                else => try std.math.ceilPowerOfTwo(usize, self.data.capacity),
-            };
-
-            // Recreate the GPU buffer of meeded.
-            if (new_size != self.old_size) {
-                if (self.gpu_buffer) |gb|
-                    gb.release();
-
-                self.old_size = new_size;
-                self.gpu_buffer = graphics.device.createBuffer(&.{
-                    .label = @typeName(@This()) ++ " buffer",
-                    .usage = self.usage,
-                    .size = new_size * @sizeOf(T),
-                });
-
-                gnorp.log.debug(@src(), "{s} resized to: {}", .{ @typeName(@This()), new_size });
-            }
-
-            graphics.device.getQueue().writeBuffer(self.gpu_buffer.?, 0, self.data.items);
-            self.dirty = false;
-        }
-    };
 }
 
 /// Uniform creates a uniform buffer object with the fields in the given struct.
@@ -294,8 +140,8 @@ const supported_types = [_]type{
     [16]f32,
     [16]f64,
 
-    math.Mat,
-    math.Vec,
+    zmath.Mat,
+    zmath.Vec,
 };
 
 /// isSupportedType returns true if T is a supported type.
