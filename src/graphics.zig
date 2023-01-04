@@ -115,6 +115,12 @@ pub inline fn getSharedBindGroupEntry(binding: u32) gpu.BindGroup.Entry {
     return shared_uniforms.getBindGroupEntry(binding);
 }
 
+/// setClearColor sets the backbuffer clear color provided by subsequent
+/// calls to `getColorAttachment()`.
+pub inline fn setClearColor(color: gpu.Color) void {
+    clear_color = color;
+}
+
 /// getColorAttachment returns a renderpass color attachment with the current
 /// backbuffer and clear color. As well as then given LoadOp.
 pub fn getColorAttachment(load_op: gpu.LoadOp) gpu.RenderPassColorAttachment {
