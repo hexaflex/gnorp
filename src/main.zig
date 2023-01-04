@@ -102,7 +102,7 @@ pub inline fn close() void {
 ///
 /// drawFunc is called at a fixed framerate if config.fixed_framerate > 0.
 /// Otherwise it is called at the same rate as updateFunc.
-pub fn run(
+pub inline fn run(
     context: anytype,
     comptime updateFunc: fn (@TypeOf(context)) anyerror!void,
     comptime drawFunc: fn (@TypeOf(context)) anyerror!void,
@@ -112,7 +112,7 @@ pub fn run(
     return runCapped(context, updateFunc, drawFunc);
 }
 
-inline fn runUncapped(
+fn runUncapped(
     context: anytype,
     comptime updateFunc: fn (@TypeOf(context)) anyerror!void,
     comptime drawFunc: fn (@TypeOf(context)) anyerror!void,
@@ -128,7 +128,7 @@ inline fn runUncapped(
     }
 }
 
-inline fn runCapped(
+fn runCapped(
     context: anytype,
     comptime updateFunc: fn (@TypeOf(context)) anyerror!void,
     comptime drawFunc: fn (@TypeOf(context)) anyerror!void,
