@@ -3,11 +3,15 @@ const zmath = @import("zmath");
 
 test {
     std.testing.refAllDecls(@This());
-    std.testing.refAllDecls(Transform);
+    std.testing.refAllDecls(Transform2d);
+    std.testing.refAllDecls(Transform3d);
 }
 
-/// Transform describes transformation data for a 2D object.
-pub const Transform = struct {
+/// Transform is deprecated; use Transform2d.
+pub const Transform = Transform2d;
+
+/// Transform2d describes transformation data for a 2D object.
+pub const Transform2d = struct {
     position: [2]f32,
     scale: [2]f32,
     angle: f32, // angle in radians.
@@ -32,7 +36,7 @@ pub const Transform = struct {
     }
 
     /// rotate turns the object by the given relative angle in radians.
-    pub inline fn rotate(self: *@This(), angle: [2]f32) void {
+    pub inline fn rotate(self: *@This(), angle: f32) void {
         self.setAngle(self.angle + angle);
     }
 
@@ -73,6 +77,114 @@ pub const Transform = struct {
         const m_translate = zmath.translation(self.position[0] + 0.375, self.position[1] + 0.375, 0);
         const m_scale = zmath.scaling(self.scale[0], self.scale[1], 0);
         const m_rotate = zmath.rotationZ(self.angle);
+
+        self.model = zmath.mul(zmath.mul(m_scale, m_rotate), m_translate);
+        return self.model;
+    }
+};
+
+/// Transform3d describes transformation data for a 3D object.
+pub const Transform3d = struct {
+    position: zmath.Vec,
+    scale: zmath.Vec,
+    angle: zmath.Vec, // angle in radians.
+    model: zmath.Mat,
+    dirty: bool,
+
+    pub fn init() @This() {
+        return .{
+            .position = .{ 0, 0, 0, 0 },
+            .scale = .{ 1, 1, 1, 0 },
+            .angle = .{ 0, 0, 0, 0 },
+            .model = zmath.identity(),
+            .dirty = true,
+        };
+    }
+
+    /// setAngle sets the rotation to the given angle in radians.
+    pub inline fn setAngle(self: *@This(), angle: zmath.Vec) void {
+        self.angle = angle;
+        self.dirty = true;
+    }
+
+    /// setAngleX sets the X rotation to the given angle in radians.
+    pub inline fn setAngleX(self: *@This(), angle: f32) void {
+        self.angle[0] = angle;
+        self.dirty = true;
+    }
+
+    /// setAngleY sets the Y rotation to the given angle in radians.
+    pub inline fn setAngleY(self: *@This(), angle: f32) void {
+        self.angle[1] = angle;
+        self.dirty = true;
+    }
+
+    /// setAngleZ sets the Z rotation to the given angle in radians.
+    pub inline fn setAngleZ(self: *@This(), angle: f32) void {
+        self.angle[2] = angle;
+        self.dirty = true;
+    }
+
+    /// rotate turns the object by the given relative angle in radians.
+    pub inline fn rotate(self: *@This(), angle: zmath.Vec) void {
+        self.setAngle(self.angle + angle);
+    }
+
+    /// rotateX turns the object by the given relative X angle in radians.
+    pub inline fn rotateX(self: *@This(), angle: f32) void {
+        self.setAngleX(self.angle[0] + angle);
+    }
+
+    /// rotateY turns the object by the given relative Y angle in radians.
+    pub inline fn rotateY(self: *@This(), angle: f32) void {
+        self.setAngleY(self.angle[1] + angle);
+    }
+
+    /// rotateY turns the object by the given relative Y angle in radians.
+    pub inline fn rotateZ(self: *@This(), angle: f32) void {
+        self.setAngleZ(self.angle[2] + angle);
+    }
+
+    /// setPosition sets the position to the given value.
+    pub inline fn setPosition(self: *@This(), pos: zmath.Vec) void {
+        self.position = pos;
+        self.dirty = true;
+    }
+
+    /// move offsets the position by the given relative distance.
+    pub inline fn move(self: *@This(), dist: zmath.Vec) void {
+        self.setPosition(self.position + dist);
+    }
+
+    /// setScale sets the scale to the given value.
+    pub inline fn setScale(self: *@This(), scale: zmath.Vec) void {
+        self.scale = scale;
+        self.dirty = true;
+    }
+
+    /// inflate increases/decreases the scale by the given relative offsets.
+    pub inline fn inflate(self: *@This(), scale: zmath.Vec) void {
+        self.setScale(self.scale + scale);
+    }
+
+    /// getModel returns the precomputed model matrix.
+    pub inline fn getModel(self: *@This()) zmath.Mat {
+        _ = self.getModelIfUpdated();
+        return self.model;
+    }
+
+    /// getModelIfUpdated returns the up-to-date model matrix, or null if
+    /// nothing has changed since the last call.
+    pub fn getModelIfUpdated(self: *@This()) ?zmath.Mat {
+        if (!self.dirty) return null;
+        self.dirty = false;
+
+        const m_translate = zmath.translationV(self.position);
+        const m_scale = zmath.scalingV(self.scale);
+        const m_rotateX = zmath.rotationX(self.angle[0]);
+        const m_rotateY = zmath.rotationY(self.angle[1]);
+        const m_rotateZ = zmath.rotationZ(self.angle[2]);
+        const m_rotate = zmath.mul(m_rotateX, zmath.mul(m_rotateY, m_rotateZ));
 
         self.model = zmath.mul(zmath.mul(m_scale, m_rotate), m_translate);
         return self.model;
